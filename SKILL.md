@@ -7,14 +7,6 @@ description: Automated MR review fix workflow with 3 subcommands: review (analyz
 
 3-phase workflow for fixing GitLab MR review findings.
 
-## Subcommands
-
-```
-/fix-mr review <MR_URL>   → Read comments, extract issues, show validity analysis
-/fix-mr fix <MR_URL>      → Apply valid fixes, commit, do NOT push
-/fix-mr reopen <MR_URL>   → Push, post summary comment, reopen MR
-```
-
 ---
 
 ## `/fix-mr review <MR_URL>`
@@ -32,7 +24,7 @@ glab mr view $MR_ID --comments
 ```
 
 3. **Parse from output:**
-- `reviewers:` → reviewer username (e.g. `farizasandaira`)
+- `reviewers:` → reviewer username
 - `author:` → MR author
 - `source_branch:` → branch name
 - Comment blocks → list of findings
@@ -42,13 +34,20 @@ glab mr view $MR_ID --comments
 - Check if issue still exists
 - Classify: ✅ Already fixed / ❌ Still valid / ⏳ Manual task
 
-5. **Output:** Present findings as a table to the user
+5. **Output:** Present findings as a numbered table to the user
 
+```markdown
+| # | Finding | Status |
+|---|---------|--------|
+| 1 | <short description of finding> | ❌ Needs fix |
+| 2 | <short description of finding> | ✅ Already fixed |
+| 3 | <short description of finding> | ⏳ Manual |
 ```
-| # | Finding | Status | Reason |
-|---|---------|--------|--------|
-| 1 | <description> | ✅ Already fixed / ❌ Needs fix / ⏳ Manual | <file:line> |
-```
+
+**Status types:**
+- `❌ Needs fix` — code change required, can be auto-fixed
+- `✅ Already fixed` — issue no longer exists in codebase
+- `⏳ Manual` — requires human verification (e.g., load tests, EXPLAIN ANALYZE)
 
 ---
 
@@ -64,11 +63,11 @@ Apply fixes. Commit but do NOT push.
 
 **Code fixes:**
 - Read the file, apply minimum change
-- `isMerchantIdentifierConstraint` pattern: catch pg constraint → map to domain error
-- `IsMerchantScoped()` pattern: add scope check for MERCHANT_USER
+- Error handling pattern: catch DB constraint violation → map to domain error
+- Authorization pattern: add scope check for specific user roles
 
 **Test fixes:**
-- Add to existing `*_test.go` following file patterns (stubs for unit, `testdb.Pool` for integration)
+- Add tests following project's existing test patterns and conventions
 
 **Database fixes:**
 - Migration not merged → edit existing `.up.sql`
@@ -80,9 +79,11 @@ Apply fixes. Commit but do NOT push.
 
 3. Verify:
 ```bash
-go build ./...
-go vet ./...
-go test ./... -count=1 -timeout 60s
+# Run project's standard build and test commands
+# Examples (adjust to project's stack):
+# Go: go build ./... && go test ./...
+# Node: npm run build && npm test
+# Python: python -m pytest
 ```
 
 4. Commit:
@@ -134,19 +135,3 @@ glab mr reopen $MR_ID
 ```
 
 ---
-
-## Rules
-
-1. **Verify reviewer name** from `glab mr view` output — never guess
-2. **Never modify already-merged migrations**
-3. **Read before editing** — always Read/cat the file first
-4. **Keep fixes minimal** — fix what's asked, nothing more
-5. **fix never pushes** — only reopen pushes
-6. **Use `ptr()` for string pointers, `ptrFloat()` for float pointers** — don't use `new()` for non-zero values
-
-## Error Handling
-
-- `glab` not installed → `brew install glab` then `! glab auth login --web`
-- `TEST_DATABASE_DSN` not set → integration tests auto-skip via `t.Skip`
-- Migration timestamp collision → `date -u +"%Y%m%d%H%M%S"` for new timestamp
-- Build fails → read error, fix, re-verify before moving on
