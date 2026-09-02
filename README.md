@@ -101,16 +101,16 @@ cp SKILL.md ~/.claude/skills/fix-mr/
 
 | Tool | Purpose | Install |
 |------|---------|---------|
-| [glab](https://gitlab.com/gitlab-org/cli) | GitLab CLI for MR operations | `brew install glab` |
-| [gh](https://cli.github.com) | GitHub CLI (for repo setup only) | `brew install gh` |
+| [glab](https://gitlab.com/gitlab-org/cli) | GitLab CLI (required for GitLab projects) | `brew install glab` |
+| [gh](https://cli.github.com) | GitHub CLI (required for GitHub projects) | `brew install gh` |
 
 ### Auth
 
 ```bash
-# GitLab (required for MR read/write)
+# For GitLab projects:
 glab auth login --web
 
-# GitHub (optional, for repo management)
+# For GitHub projects:
 gh auth login
 ```
 
