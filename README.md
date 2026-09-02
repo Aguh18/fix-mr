@@ -8,12 +8,9 @@ Automated MR review fix workflow — analyze comments, fix issues, push, and reo
 
 ## How It Works
 
-```mermaid
-flowchart LR
-    A["/fix-mr review"] -->|issues extracted| B["/fix-mr fix"]
-    B -->|code fixed, committed| C["/fix-mr reopen"]
-    C -->|pushed, comment posted, MR reopened| D[Done ✅]
-```
+![Workflow Diagram](docs/diagrams/workflow.svg)
+
+![Sequence Diagram](docs/diagrams/sequence.svg)
 
 **3-phase workflow:**
 
