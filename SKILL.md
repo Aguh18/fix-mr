@@ -2,7 +2,7 @@
 name: fix-mr
 description: Review, fix, verify, and reopen GitLab merge requests safely.
 version: 2.0.0
-author: Muh Fariza Sandaira, Hermes Agent
+author: "[@farizasandaira](https://github.com/farizasandaira), [@Aguh18](https://github.com/Aguh18)"
 license: MIT
 platforms: [linux, macos]
 metadata:
