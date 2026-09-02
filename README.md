@@ -1,6 +1,6 @@
 # 🔧 fix-mr for Claude Code
 
-Automated MR review fix workflow — analyze comments, fix issues, push, and reopen. One skill, three commands.
+Evidence-first MR review fix workflow — classify findings, apply minimal fixes, verify every applicable gate, then publish and reopen safely. One skill, three explicit phases.
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-Skills-blue)
@@ -16,9 +16,11 @@ Automated MR review fix workflow — analyze comments, fix issues, push, and reo
 
 | Phase | Command | What Happens |
 |-------|---------|-------------|
-| 📖 Review | `/fix-mr review <MR_URL>` | Read MR comments, extract issues, classify valid/invalid/manual |
-| 🔨 Fix | `/fix-mr fix <MR_URL>` | Apply fixes, run build + tests, commit (no push) |
-| 🚀 Reopen | `/fix-mr reopen <MR_URL>` | Push, post summary comment to MR, reopen |
+| 📖 Review | `/fix-mr review <MR_URL>` | Read-only evidence ledger: classify every finding and scope |
+| 🔨 Fix | `/fix-mr fix <MR_URL>` | Apply minimal fixes, regression tests, full gates, local commit |
+| 🚀 Reopen | `/fix-mr reopen <MR_URL>` | Fresh preflight, explicit confirmation, push, comment, reopen |
+
+The workflow does not merge MRs or transition Jira. It never treats skipped or unverified tests as PASS, and it never publishes before the exact lowercase confirmation `yes`.
 
 ## Commands
 
