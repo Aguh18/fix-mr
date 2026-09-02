@@ -46,12 +46,12 @@ Apply valid fixes and commit.
 # Reads the review analysis
 # For each valid finding:
 #   - Code fix: minimum change at file:line
-#   - Test fix: add to *_test.go following patterns
+#   - Test fix: add tests following project conventions
 #   - DB fix: edit unmerged migration or create new one
-#   - Doc fix: update swagger annotations
+#   - Doc fix: update annotations
 #
 # After all fixes:
-#   go build → go vet → go test → git commit
+#   build → test → git commit
 # Does NOT push — run /fix-mr reopen when ready
 ```
 
@@ -121,48 +121,27 @@ gh auth login
 ## Example Session
 
 ```
-You:  /fix-mr review https://gitlab.com/org/repo/-/merge_requests/185
+You:  /fix-mr review https://gitlab.com/your-org/your-repo/-/merge_requests/123
 
-Claude: Found 7 items from @farizasandaira:
+Claude: Found 5 items from @reviewer:
         | # | Finding                  | Status    |
         |---|--------------------------|-----------|
-        | 1 | Concurrent NMID test     | ❌ Needs fix |
-        | 2 | Error handling PG errors | ✅ Already fixed |
-        | 3 | MERCHANT_USER scope      | ✅ Already fixed |
-        | 4 | Migration COUNT bug      | ❌ Needs fix |
-        | 5 | Page/limit validation    | ❌ Needs fix |
-        | 6 | EXPLAIN ANALYZE          | ⏳ Manual |
-        | 7 | Load test benchmark      | ⏳ Manual |
+        | 1 | Missing input validation | ❌ Needs fix |
+        | 2 | Null pointer check       | ✅ Already fixed |
+        | 3 | Unit test coverage       | ✅ Already fixed |
+        | 4 | DB query optimization    | ❌ Needs fix |
+        | 5 | Error message clarity    | ❌ Needs fix |
 
-You:  /fix-mr fix https://gitlab.com/org/repo/-/merge_requests/185
+You:  /fix-mr fix https://gitlab.com/your-org/your-repo/-/merge_requests/123
 
-Claude: [applies 3 fixes, runs tests, commits]
+Claude: [applies 2 fixes, runs tests, commits]
         Ready. Run /fix-mr reopen when done.
 
-You:  /fix-mr reopen https://gitlab.com/org/repo/-/merge_requests/185
+You:  /fix-mr reopen https://gitlab.com/your-org/your-repo/-/merge_requests/123
 
 Claude: [pushes, posts summary, reopens MR]
-        Done. MR #185 reopened:
-        https://gitlab.com/org/repo/-/merge_requests/185
+        Done. MR #123 reopened.
 ```
-
-## Rules
-
-1. **`fix` never pushes** — only `reopen` pushes
-2. **Never modify already-merged migrations** — create new ones
-3. **Verify reviewer name** from `glab mr view` — never guess
-4. **Minimal fixes only** — fix what's asked, nothing more
-5. **Read before editing** — always inspect file first
-
-## Error Handling
-
-| Error | Solution |
-|-------|----------|
-| `glab: command not found` | `brew install glab` |
-| `401 Unauthorized` | `! glab auth login --web` |
-| `TEST_DATABASE_DSN not set` | Integration tests auto-skip |
-| Migration timestamp collision | Auto-generate new timestamp |
-| Build fails after fix | Read error → fix → re-verify |
 
 ## License
 
