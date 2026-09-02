@@ -114,29 +114,7 @@ gh auth login
 
 ## Workflow Diagram
 
-```mermaid
-sequenceDiagram
-    participant U as Developer
-    participant C as Claude Code
-    participant G as GitLab API
-
-    U->>C: /fix-mr review <MR_URL>
-    C->>G: glab mr view $MR_ID --comments
-    G-->>C: MR metadata + reviewer comments
-    C-->>U: Table of findings (valid/invalid/manual)
-
-    U->>C: /fix-mr fix <MR_URL>
-    C->>C: Read files, apply fixes
-    C->>C: go build, go vet, go test
-    C->>C: git commit (no push)
-    C-->>U: "Ready. Run /fix-mr reopen when done."
-
-    U->>C: /fix-mr reopen <MR_URL>
-    C->>G: git push
-    C->>G: glab mr note create (summary)
-    C->>G: glab mr reopen
-    C-->>U: MR reopened with summary comment ✅
-```
+![Sequence Diagram](docs/diagrams/sequence.svg)
 
 ## Example Session
 
