@@ -112,10 +112,6 @@ glab auth login --web
 gh auth login
 ```
 
-## Workflow Diagram
-
-![Sequence Diagram](docs/diagrams/sequence.svg)
-
 ## Example Session
 
 ```
