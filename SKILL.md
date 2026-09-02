@@ -155,31 +155,27 @@ Never merge the MR or transition Jira in this skill. Those are separate, explici
 
 ### Comment template
 
+Each finding MUST include the exact file path and line number where the fix was applied, so reviewers can verify. Example:
+
 ```
 @<resolved_reviewer>
 
-Result Review — <MR_URL>
+Hi, follow-up fixes applied:
 
-Branch: <source_branch>
-Commit: <verified_commit_sha>
+| # | Finding | Status | Fix |
+|---|---------|--------|-----|
+| 1 | <finding description> | ✅ Fixed | <what was done> — `<file>:<line>` |
+| 2 | <finding description> | ✅ Already fixed | <proof/commit reference> |
+| 3 | <finding description> | ⏳ Manual | <what needs manual verification> |
 
-List Of Testing By Reviewer
-* QA: <PASS/FAIL/MANUAL> — <command, inputs, and outcome>
-* Security: <PASS/FAIL/MANUAL> — <checks and real negative cases>
-* Performance: <PASS/FAIL/MANUAL/N/A> — <measurement and environment>
-* Contract/docs: <PASS/FAIL/N/A> — <artifacts and reason>
-
-Verification File
-* <verified artifact path, or N/A with reason>
-
-Verdict
-* <Pass / Fail / Manual Gate>
-
-Need To Be Fix
-- <finding ID and file:symbol> — <remaining corrective action>
+**Results:** <build command> ✅ | <lint command> ✅ | <test command> ✅
 ```
 
-Omit `Need To Be Fix` only when no unresolved findings exist. Do not claim `Pass` if any mandatory test, artifact, or security check is unverified.
+**Rules for the table:**
+- Every ✅ Fixed row MUST have `file:line` or `function_name` reference
+- ✅ Already fixed rows MUST reference the existing commit or code that proves it
+- ⏳ Manual rows MUST explain what needs to be verified and where
+- Status column: `✅ Fixed` (we fixed it), `✅ Already fixed` (was already correct), `⏳ Manual` (needs human check), `❌ Skipped` (not applicable)
 
 ## Required Review Matrix
 
