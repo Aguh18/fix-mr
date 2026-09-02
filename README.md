@@ -55,6 +55,14 @@ Apply valid fixes and commit.
 # Does NOT push — run /fix-mr reopen when ready
 ```
 
+**Worktree Mode (`--worktree`):**
+
+```bash
+/fix-mr fix <MR_URL> --worktree
+```
+
+Isolates each finding in its own worktree for independent testing. Best for 3+ independent fixes or risky changes.
+
 ### `/fix-mr reopen <MR_URL>`
 
 Push, comment, and reopen.
