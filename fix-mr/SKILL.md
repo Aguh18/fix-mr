@@ -1,114 +1,152 @@
 ---
 name: fix-mr
-description: Auto-fix issues from a closed GitLab MR review. Reads reviewer comments, validates findings against codebase, fixes valid issues, pushes, and posts summary. Trigger: `/fix-mr <MR_URL>`
+description: Automated MR review fix workflow with 3 subcommands: review (analyze), fix (apply), reopen (post & reopen). Trigger: `/fix-mr review|fix|reopen <MR_URL>`
 ---
 
-# fix-mr — Automated MR Review Fix
+# fix-mr — Automated MR Review Fix Workflow
 
-Takes a GitLab MR link (closed), reads reviewer comments, analyzes each finding, fixes valid issues, pushes, and posts a summary comment.
+3-phase workflow for fixing GitLab MR review findings.
 
-## Usage
+## Subcommands
 
 ```
-/fix-mr https://gitlab.com/<org>/<repo>/-/merge_requests/<ID>
+/fix-mr review <MR_URL>   → Read comments, extract issues, show validity analysis
+/fix-mr fix <MR_URL>      → Apply valid fixes, commit, do NOT push
+/fix-mr reopen <MR_URL>   → Push, post summary comment, reopen MR
 ```
 
-## Workflow
+---
 
-### Step 1: Parse MR Link
-Extract from URL:
-- `GL_REPO` = `<org>/<repo>` (URL-decoded)
-- `MR_ID` = the number after `/merge_requests/`
+## `/fix-mr review <MR_URL>`
 
-### Step 2: Fetch MR Metadata + Comments
+Read-only analysis. No code changes.
+
+### Steps
+
+1. **Parse URL** → extract `MR_ID` from `/-/merge_requests/<ID>`
+
+2. **Fetch metadata:**
 ```bash
 glab mr view $MR_ID
 glab mr view $MR_ID --comments
 ```
 
-Parse from output:
-- `reviewers:` line → reviewer username
-- `source_branch:` line → current branch
-- `author:` line → MR author
-- Comment blocks → each finding
+3. **Parse from output:**
+- `reviewers:` → reviewer username (e.g. `farizasandaira`)
+- `author:` → MR author
+- `source_branch:` → branch name
+- Comment blocks → list of findings
 
-### Step 3: Analyze Findings
-For each finding:
-1. **Identify the category** — Code Fix, Test Fix, Security Fix, Database Fix, Documentation Fix, Performance Fix
-2. **Locate the file** — search codebase for mentioned file paths
-3. **Read the current code** — check if issue still exists
-4. **Determine validity:**
-   - ✅ **Already fixed** → skip
-   - ❌ **Still valid** → fix it
-   - ⏳ **Manual task** → note as requiring manual verification
+4. **For each finding:**
+- Read mentioned file paths in the codebase
+- Check if issue still exists
+- Classify: ✅ Already fixed / ❌ Still valid / ⏳ Manual task
 
-### Step 4: Fix Valid Issues
+5. **Output:** Present findings as a table to the user
+
+```
+| # | Finding | Status | Reason |
+|---|---------|--------|--------|
+| 1 | <description> | ✅ Already fixed / ❌ Needs fix / ⏳ Manual | <file:line> |
+```
+
+---
+
+## `/fix-mr fix <MR_URL>`
+
+Apply fixes. Commit but do NOT push.
+
+### Steps
+
+1. Run the same analysis as `review` step 1-4
+
+2. For each ❌ **Needs fix** item, apply the fix:
 
 **Code fixes:**
-- Read the file at the mentioned line
-- Apply the minimum fix
-- Verify with `go build ./...` after each fix
+- Read the file, apply minimum change
+- `isMerchantIdentifierConstraint` pattern: catch pg constraint → map to domain error
+- `IsMerchantScoped()` pattern: add scope check for MERCHANT_USER
 
 **Test fixes:**
-- Add test to appropriate `*_test.go` file
-- Use existing patterns (stubs, integration helpers, etc.)
+- Add to existing `*_test.go` following file patterns (stubs for unit, `testdb.Pool` for integration)
 
 **Database fixes:**
-- If migration not yet merged → edit existing migration
-- If migration already merged → create new migration with `date -u +"%Y%m%d%H%M%S"`
+- Migration not merged → edit existing `.up.sql`
+- Migration already merged → new migration: `date -u +"%Y%m%d%H%M%S"` + unique name
+- Never edit already-deployed migrations
 
 **Documentation fixes:**
-- Update swagger annotations, README, or inline docs
+- Update `@Summary`, `@Description`, `@Param`, `@Failure` annotations
 
-### Step 5: Verify
+3. Verify:
 ```bash
 go build ./...
 go vet ./...
 go test ./... -count=1 -timeout 60s
 ```
 
-### Step 6: Commit + Push
+4. Commit:
 ```bash
 git add -A
 git commit -m "fix(<module>): resolve <N> reviewer findings
 
-<list each fix>
+<bullet list of each fix>
 
 Co-Authored-By: Claude Code <noreply@anthropic.com>"
-git push origin <branch>
 ```
 
-### Step 7: Post Summary Comment + Reopen
+**Do NOT push.** Tell user: `Ready. Run /fix-mr reopen <MR_URL> when you want to push and post.`
+
+---
+
+## `/fix-mr reopen <MR_URL>`
+
+Push, post summary, reopen.
+
+### Steps
+
+1. **Push:**
+```bash
+git push origin <current_branch>
+```
+
+2. **Post summary comment** to MR:
 ```bash
 glab mr note create $MR_ID --message "<summary>"
-glab mr reopen $MR_ID
 ```
 
-Summary format:
-```markdown
+Summary template:
+```
 Hi @<reviewer>, here's the status of all items from the review:
 
 | # | Issue | Status | File:Line |
 |---|-------|--------|-----------|
 | 1 | <finding> | ✅ Fixed / ⏳ Manual / ❌ Not valid | `<file>:<line>` — <what was done> |
 
-**Migration test result:** <result if applicable>
+**Migration test result:** <if applicable>
 
-Items marked ⏳ require manual verification in a staging environment.
+Items marked ⏳ require manual verification in staging.
 ```
 
-## Important Rules
+3. **Reopen MR:**
+```bash
+glab mr reopen $MR_ID
+```
 
-1. **Never modify already-merged migrations** — create new ones instead
-2. **Check branch state first** — `git branch --show-current` and `git status --short`
-3. **Read before editing** — always `Read` or `cat` the file before editing
-4. **Verify reviewer name** — check `glab mr view` output, don't guess
-5. **One build check after all fixes** — not after each individual fix
-6. **Keep fixes minimal** — YAGNI, fix what's asked, nothing more
+---
+
+## Rules
+
+1. **Verify reviewer name** from `glab mr view` output — never guess
+2. **Never modify already-merged migrations**
+3. **Read before editing** — always Read/cat the file first
+4. **Keep fixes minimal** — fix what's asked, nothing more
+5. **fix never pushes** — only reopen pushes
+6. **Use `ptr()` for string pointers, `ptrFloat()` for float pointers** — don't use `new()` for non-zero values
 
 ## Error Handling
 
-- If `glab` is not installed → `brew install glab` then `! glab auth login --web`
-- If `TEST_DATABASE_DSN` not set → integration tests skipped automatically
-- If migration has timestamp collision → rename with new unique timestamp
-- If build fails after fix → read error, fix, re-verify
+- `glab` not installed → `brew install glab` then `! glab auth login --web`
+- `TEST_DATABASE_DSN` not set → integration tests auto-skip via `t.Skip`
+- Migration timestamp collision → `date -u +"%Y%m%d%H%M%S"` for new timestamp
+- Build fails → read error, fix, re-verify before moving on
